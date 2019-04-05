@@ -18,6 +18,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
@@ -89,15 +90,22 @@ func getCgroupAvailableMem() (retVal uint64, err error) {
 		log.Debugf("Unable to get memory cgroup path")
 		return 0, err
 	}
+
+	if _, err := os.Stat(filepath.Join(CGROUP_FOLDER_PREFIX, path)); os.IsExist(err) {
+		path = filepath.Join(CGROUP_FOLDER_PREFIX, path)
+	} else {
+		path = filepath.Join(CGROUP_FOLDER_PREFIX)
+	}
+
 	log.Debugf("the memory cgroup path for the current process is %v", path)
 
-	mem_limit, err := readFileAndGetValue(filepath.Join(CGROUP_FOLDER_PREFIX, path, MEM_LIMIT_FILE_SUFFIX))
+	mem_limit, err := readFileAndGetValue(filepath.Join(path, MEM_LIMIT_FILE_SUFFIX))
 	if err != nil {
 		log.Debugf("Unable to get memory limit from cgroup error: %v", err)
 		return 0, err
 	}
 
-	mem_usage, err := readFileAndGetValue(filepath.Join(CGROUP_FOLDER_PREFIX, path, MEM_USAGE_FILE_SUFFIX))
+	mem_usage, err := readFileAndGetValue(filepath.Join(path, MEM_USAGE_FILE_SUFFIX))
 	if err != nil {
 		log.Debugf("Unable to get memory usage from cgroup error: %v", err)
 		return 0, err
